@@ -1,0 +1,81 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { aulaPorId } from '../../../data/curso';
+
+const { id } = Astro.params;
+const resultado = id ? aulaPorId(id) : undefined;
+
+if (!resultado) {
+  return Astro.redirect('/app');
+}
+const { aula, modulo } = resultado;
+---
+
+<BaseLayout
+  title={`${aula.titulo} — Curso Bruno Medeiros`}
+  description={`Aula: ${aula.titulo} — módulo ${modulo.titulo}.`}
+  noindex
+>
+  <div class="container" style="padding-block:32px 64px;max-width:900px">
+    <nav aria-label="Navegação da aula" style="margin-bottom:20px">
+      <a href="/app" class="voltar mono">← Voltar ao curso</a>
+    </nav>
+
+    <p class="mono" style="color:var(--gray);font-size:13px;margin:0 0 8px">
+      {modulo.titulo} · <span style="color:var(--orange)">{aula.duracao}</span>
+    </p>
+    <h1 style="font-size:clamp(24px,5vw,34px);margin:0 0 24px">{aula.titulo}</h1>
+
+    <!-- player: B2 pendente (Bruno cria o bucket depois) → placeholder -->
+    <div class="player" role="img" aria-label="Vídeo em breve">
+      <div class="icone" aria-hidden="true">🎬</div>
+      <p class="mono">vídeo em breve</p>
+      <p class="muted" style="margin-top:8px;font-size:14px">
+        Esta aula será publicada em breve. Fique de olho!
+      </p>
+    </div>
+
+    <footer style="margin-top:24px">
+      <a href="/app" class="btn" style="text-decoration:none;display:inline-block">Voltar ao curso →</a>
+    </footer>
+  </div>
+</BaseLayout>
+
+<style>
+  .voltar {
+    color: var(--gray);
+    text-decoration: none;
+    font-size: 13px;
+  }
+  .voltar:hover {
+    color: var(--orange);
+  }
+  .voltar:focus-visible {
+    outline: 2px solid var(--orange-light);
+    outline-offset: 2px;
+  }
+  .player {
+    aspect-ratio: 16 / 9;
+    background: var(--bg2);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+  }
+  .icone {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
+  .player p.mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--orange);
+    margin: 0;
+  }
+</style>

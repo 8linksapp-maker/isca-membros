@@ -1,0 +1,236 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Entrar no curso — Área de membros | Bruno Medeiros"
+  description="Entre com seu email e senha ou crie sua conta gratuita para acessar o curso de SEO do Bruno Medeiros."
+  canonical="https://links.brunomedeiroseo.com.br/membros"
+>
+  <div class="container" style="padding-block:48px 64px;max-width:520px">
+    <header class="mono" style="color:var(--gray);font-size:13px;margin-bottom:24px">
+      // Área de membros
+    </header>
+
+    <div class="card" style="padding:40px 32px">
+      <h1 style="font-size:clamp(26px,5vw,36px);text-align:center">
+        Acesse o <span style="color:var(--orange)">curso</span>
+      </h1>
+
+      <!-- abas -->
+      <div class="abas" role="tablist" aria-label="Entrar ou criar conta">
+        <button type="button" class="aba ativa" role="tab" id="tab-login" aria-selected="true" aria-controls="form-login">Entrar</button>
+        <button type="button" class="aba" role="tab" id="tab-cadastro" aria-selected="false" aria-controls="form-cadastro">Criar conta</button>
+      </div>
+
+      <p id="form-error" class="error" role="alert" aria-live="polite" hidden></p>
+      <p id="form-info" class="info" role="status" aria-live="polite" hidden></p>
+
+      <!-- LOGIN -->
+      <form id="form-login" role="tabpanel" aria-labelledby="tab-login">
+        <div class="field">
+          <label for="login-email">Email</label>
+          <input id="login-email" name="email" type="email" autocomplete="email" placeholder="voce@email.com" required />
+        </div>
+        <div class="field">
+          <label for="login-senha">Senha</label>
+          <input id="login-senha" name="senha" type="password" autocomplete="current-password" placeholder="Sua senha" required />
+        </div>
+        <button type="submit" class="btn" id="btn-login" style="width:100%">Entrar →</button>
+      </form>
+
+      <!-- CADASTRO -->
+      <form id="form-cadastro" role="tabpanel" aria-labelledby="tab-cadastro" hidden>
+        <div class="field">
+          <label for="cad-nome">Nome</label>
+          <input id="cad-nome" name="nome" type="text" autocomplete="name" placeholder="Seu nome" required maxlength="120" />
+        </div>
+        <div class="field">
+          <label for="cad-email">Email</label>
+          <input id="cad-email" name="email" type="email" autocomplete="email" placeholder="voce@email.com" required />
+        </div>
+        <div class="field">
+          <label for="cad-senha">Senha</label>
+          <input id="cad-senha" name="senha" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" required minlength="8" />
+        </div>
+        <button type="submit" class="btn" id="btn-cadastro" style="width:100%">Criar minha conta →</button>
+        <p class="muted small" style="margin-top:12px;text-align:center">
+          Você recebe um email com seus dados de acesso.
+        </p>
+      </form>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .abas {
+    display: flex;
+    gap: 8px;
+    margin: 24px 0;
+    background: var(--bg3);
+    padding: 4px;
+    border-radius: 10px;
+  }
+  .aba {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    color: var(--gray);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+  .aba.ativa {
+    background: var(--orange);
+    color: #1a0d05;
+  }
+  .aba:focus-visible {
+    outline: 2px solid var(--orange-light);
+    outline-offset: 2px;
+  }
+  .field {
+    margin-bottom: 16px;
+  }
+  .small {
+    font-size: 13px;
+  }
+  .info {
+    color: #8ecf8e;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+</style>
+
+  <script>
+    import { supabaseBrowser } from '../lib/supabase-browser';
+
+    let supabase: ReturnType<typeof supabaseBrowser> | null = null;
+    try {
+      supabase = supabaseBrowser();
+    } catch (e) {
+      console.error('[membros] erro ao iniciar Supabase:', e);
+    }
+    const errorEl = document.getElementById('form-error') as HTMLParagraphElement;
+    const infoEl = document.getElementById('form-info') as HTMLParagraphElement;
+
+    const tabLogin = document.getElementById('tab-login') as HTMLButtonElement;
+    const tabCadastro = document.getElementById('tab-cadastro') as HTMLButtonElement;
+    const formLogin = document.getElementById('form-login') as HTMLFormElement;
+    const formCadastro = document.getElementById('form-cadastro') as HTMLFormElement;
+    const btnLogin = document.getElementById('btn-login') as HTMLButtonElement;
+    const btnCadastro = document.getElementById('btn-cadastro') as HTMLButtonElement;
+
+    function mostrarErro(msg: string) {
+      infoEl.hidden = true;
+      errorEl.textContent = msg;
+      errorEl.hidden = false;
+    }
+    function limparFeedback() {
+      errorEl.hidden = true;
+      infoEl.hidden = true;
+      errorEl.textContent = '';
+    }
+
+    function ativarAba(aba: 'login' | 'cadastro') {
+      limparFeedback();
+      const ehLogin = aba === 'login';
+      tabLogin.classList.toggle('ativa', ehLogin);
+      tabCadastro.classList.toggle('ativa', !ehLogin);
+      tabLogin.setAttribute('aria-selected', String(ehLogin));
+      tabCadastro.setAttribute('aria-selected', String(!ehLogin));
+      formLogin.hidden = !ehLogin;
+      formCadastro.hidden = ehLogin;
+    }
+
+    tabLogin?.addEventListener('click', () => ativarAba('login'));
+    tabCadastro?.addEventListener('click', () => ativarAba('cadastro'));
+
+    formLogin?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!supabase) return mostrarErro('Erro ao carregar autenticação. Recarregue a página.');
+      limparFeedback();
+      const email = (formLogin.email as HTMLInputElement).value.trim();
+      const senha = (formLogin.senha as HTMLInputElement).value;
+
+      btnLogin.disabled = true;
+      btnLogin.setAttribute('aria-busy', 'true');
+      btnLogin.textContent = 'Entrando…';
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+
+      if (error) {
+        mostrarErro(
+          error.message.toLowerCase().includes('invalid')
+            ? 'Email ou senha incorretos.'
+            : 'Não foi possível entrar. Tente novamente.',
+        );
+        btnLogin.disabled = false;
+        btnLogin.removeAttribute('aria-busy');
+        btnLogin.textContent = 'Entrar →';
+        return;
+      }
+      window.location.href = '/app';
+    });
+
+    formCadastro?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!supabase) return mostrarErro('Erro ao carregar autenticação. Recarregue a página.');
+      limparFeedback();
+
+      const nome = (formCadastro.nome as HTMLInputElement).value.trim();
+      const email = (formCadastro.email as HTMLInputElement).value.trim();
+      const senha = (formCadastro.senha as HTMLInputElement).value;
+
+      if (!nome) return mostrarErro('Informe seu nome.');
+      if (senha.length < 8) return mostrarErro('A senha precisa de pelo menos 8 caracteres.');
+
+      btnCadastro.disabled = true;
+      btnCadastro.setAttribute('aria-busy', 'true');
+      btnCadastro.textContent = 'Criando conta…';
+
+      try {
+        const res = await fetch('/api/cadastro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, email, senha }),
+        });
+        const json = (await res.json()) as { ok: boolean; erro?: string };
+
+        if (!res.ok || !json.ok) {
+          mostrarErro(json.erro ?? 'Não foi possível criar a conta.');
+          btnCadastro.disabled = false;
+          btnCadastro.removeAttribute('aria-busy');
+          btnCadastro.textContent = 'Criar minha conta →';
+          return;
+        }
+
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+          email,
+          password: senha,
+        });
+        if (loginError) {
+          infoEl.textContent = 'Conta criada! Faça login para entrar.';
+          infoEl.hidden = false;
+          btnCadastro.disabled = false;
+          btnCadastro.removeAttribute('aria-busy');
+          btnCadastro.textContent = 'Criar minha conta →';
+          ativarAba('login');
+          (formLogin.email as HTMLInputElement).value = email;
+          return;
+        }
+
+        window.location.href = '/app';
+      } catch {
+        mostrarErro('Erro de conexão. Tente novamente.');
+        btnCadastro.disabled = false;
+        btnCadastro.removeAttribute('aria-busy');
+        btnCadastro.textContent = 'Criar minha conta →';
+      }
+    });
+  </script>
