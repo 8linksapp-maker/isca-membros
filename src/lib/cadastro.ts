@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { supabaseServer } from './supabase';
 import { enviarEmail } from './email';
 import { templateAcessoMembro } from './email-acesso';
+import { extrairUtms, registrarConversao, utmShape } from './utm';
 
 export const cadastroSchema = z.object({
   nome: z.string().trim().min(1, 'Nome obrigatório').max(120),
@@ -12,6 +13,7 @@ export const cadastroSchema = z.object({
     .email('Email inválido')
     .max(254),
   senha: z.string().min(8, 'Senha mínima de 8 caracteres').max(72),
+  ...utmShape,
 });
 
 export type CadastroInput = z.infer<typeof cadastroSchema>;
@@ -26,7 +28,8 @@ export type ResultadoCadastro =
  * Email best-effort: se o Brevo falhar, a conta já existe e o login funciona.
  */
 export async function criarConta(input: CadastroInput): Promise<ResultadoCadastro> {
-  const { nome, email, senha } = cadastroSchema.parse(input);
+  const dados = cadastroSchema.parse(input);
+  const { nome, email, senha } = dados;
   const admin = supabaseServer();
 
   const { data: criado, error } = await admin.auth.admin.createUser({
@@ -52,6 +55,8 @@ export async function criarConta(input: CadastroInput): Promise<ResultadoCadastr
     // conta criada mas perfil falhou — loga e segue (login ainda funciona)
     console.error('[cadastro] members insert:', perfilError.message);
   }
+
+  await registrarConversao(email, extrairUtms(dados));
 
   // best-effort — não bloqueia o cadastro se o Brevo falhar
   try {

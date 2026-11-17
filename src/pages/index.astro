@@ -1,3 +1,4 @@
 ---
-return Astro.redirect('/membros');
+// mantém a query string: as UTMs do link precisam chegar no /membros
+return Astro.redirect(`/membros${Astro.url.search}`);
 ---
